@@ -1,0 +1,35 @@
+public class CandidateTriggerHandler {  
+    
+    /*When a Candidate record is 'created' or 'updated to have the email field populated from
+     null' then send an email to the candidate.*/
+
+    public static void sendEmailToCandidates(List<Candidate__c> newList, Map<Id, Candidate__c> oldMap, Boolean isInsert) {
+        List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
+
+        for (Candidate__c candidate : newList) {
+            Boolean shouldSend = false;
+
+            if (oldMap == null && candidate.Email__c != null) {
+                shouldSend = true;
+            } 
+            else if (oldMap != null && candidate.Email__c != null) {
+                Candidate__c oldCandidate = oldMap.get(candidate.Id);
+                if (oldCandidate != null && oldCandidate.Email__c == null) {
+                    shouldSend = true;
+                }
+            }
+
+            if (shouldSend) {
+                Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+                mail.setToAddresses(new String[] { candidate.Email__c });
+                mail.setSubject('Welcome Candidate');
+                mail.setPlainTextBody('Thank you for registering!');
+                emails.add(mail);
+            }
+        }
+
+        if (!emails.isEmpty()) {
+            Messaging.sendEmail(emails);
+        }
+    }             
+}
